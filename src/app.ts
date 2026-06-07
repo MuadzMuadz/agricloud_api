@@ -5,6 +5,7 @@ import { sql } from 'drizzle-orm'
 import { ZodError } from 'zod'
 import { config } from './config.ts'
 import { db } from './db/client.ts'
+import { buildOriginMatcher } from './lib/cors.ts'
 import { HttpError, zodToValidationError } from './lib/http.ts'
 import { requireAuth, type AuthUser } from './middleware/auth.ts'
 import { authRouter, rawUserHandler } from './modules/auth/routes.ts'
@@ -28,7 +29,9 @@ export function createApp() {
   app.use(
     '*',
     cors({
-      origin: config.corsOrigins,
+      // Echo origin pemanggil bila lolos allowlist/pola (Opsi B: kompatibel
+      // dengan credentials:true, tak pernah '*'). Lihat tiket Backend-CORS.
+      origin: buildOriginMatcher(config.corsOrigins, config.corsOriginPatterns),
       credentials: true,
       allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],

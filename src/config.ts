@@ -11,15 +11,28 @@ function str(name: string, fallback = ''): string {
   return process.env[name] ?? fallback
 }
 
+function list(name: string, fallback = ''): string[] {
+  return str(name, fallback)
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+}
+
+// Origin dev yang selalu diizinkan — supaya tak terulang kasus allowlist
+// kosong saat env produksi lupa di-set (lihat tiket Backend-CORS).
+const CORS_DEFAULT_ORIGINS = ['http://localhost:8006', 'http://localhost:3000']
+
 export const config = {
   env: str('APP_ENV', 'local'),
   port: int('PORT', 8005),
   appUrl: str('APP_URL', 'http://localhost:8005'),
   frontendUrl: str('APP_FRONTEND_URL', 'http://localhost:8006'),
-  corsOrigins: str('CORS_ALLOWED_ORIGINS', 'http://localhost:8006')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean),
+  // Allowlist exact = default dev + nilai env (dedup).
+  corsOrigins: Array.from(new Set([...CORS_DEFAULT_ORIGINS, ...list('CORS_ALLOWED_ORIGINS')])),
+  // Pola regex utk origin rotatif (default: semua preview/produksi *.vercel.app).
+  corsOriginPatterns: list('CORS_ALLOWED_ORIGIN_PATTERNS', '^https://([a-z0-9-]+\\.)*vercel\\.app$').map(
+    (p) => new RegExp(p),
+  ),
 
   databaseUrl: str('DATABASE_URL'),
 
