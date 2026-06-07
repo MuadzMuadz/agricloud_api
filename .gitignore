@@ -1,0 +1,10 @@
+node_modules/
+.env
+.env.local
+.env.production
+*.log
+bun.lockb
+storage/
+.vercel
+.netlify
+dist/

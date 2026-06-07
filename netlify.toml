@@ -1,0 +1,12 @@
+# Deploy Netlify (alternatif Vercel). Functions 2.0 (Node) — postgres-js jalan
+# di runtime Node, bukan Deno Edge.
+[build]
+  command = "bun install"
+  publish = "public"
+
+[functions]
+  node_bundler = "esbuild"
+
+# Routing ditangani oleh config.path '/*' di netlify/functions/api.ts.
+# Set env (DATABASE_URL, DB_PREPARE=false, JWT_SECRET, STORAGE_DRIVER=supabase,
+# SUPABASE_*, GOOGLE_*, MAIL_*, dll) di dashboard Netlify.
