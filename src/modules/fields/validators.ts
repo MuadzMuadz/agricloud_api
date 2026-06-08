@@ -10,6 +10,7 @@ const numNullable = z.coerce
 const areaNullable = z.coerce
   .number({ invalid_type_error: 'The area field must be a number.' })
   .min(0, 'The area field must be at least 0.')
+  .max(999999.99, 'The area field must not be greater than 999999.99.')
   .nullable()
   .optional()
 
