@@ -132,6 +132,7 @@ export const stages = pgTable("stages", {
 	name: varchar({ length: 255 }).notNull(),
 	order: integer().default(1).notNull(),
 	durationDays: integer("duration_days"),
+	description: text(),
 	createdAt: timestamp("created_at", { mode: 'string' }),
 	updatedAt: timestamp("updated_at", { mode: 'string' }),
 }, (table) => [
@@ -220,6 +221,7 @@ export const crops = pgTable("crops", {
 	createdAt: timestamp("created_at", { mode: 'string' }),
 	updatedAt: timestamp("updated_at", { mode: 'string' }),
 	category: varchar({ length: 255 }),
+	icon: text(),
 });
 
 export const warehouses = pgTable("warehouses", {
