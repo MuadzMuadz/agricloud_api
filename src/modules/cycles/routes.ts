@@ -77,6 +77,9 @@ cyclesRouter.post('/cycles', requireAuth, async (c) => {
   const statusName =
     input.status === 'pending' ? 'Pending' : input.status === 'done' ? 'Completed' : 'Active'
   const statusId = await getStatusId(statusName, 'cycle')
+  // Resolve di luar db.transaction(): getStatusId memakai global `db`, bukan `tx`.
+  // Memanggilnya di dalam tx → minta koneksi kedua dari pool (prod max=1) → deadlock → 502.
+  const phaseStatusId = await getStatusId('Active', 'phase')
 
   const startDate = input.start_date ?? null
   let endDate = input.end_date ?? null
@@ -119,7 +122,6 @@ cyclesRouter.post('/cycles', requireAuth, async (c) => {
       .orderBy(stages.order)
       .limit(1)
     if (firstStage[0]) {
-      const phaseStatusId = await getStatusId('Active', 'phase')
       await tx.insert(phases).values({
         cycleId,
         stageId: firstStage[0].id,

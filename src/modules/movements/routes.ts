@@ -77,11 +77,13 @@ movementsRouter.post('/movements', requireAuth, async (c) => {
 
   const code = input.type.toUpperCase() // IN | OUT
   const quantity = input.quantity
+  // Resolve di luar db.transaction(): getStatusId memakai global `db`, bukan `tx`.
+  // Memanggilnya di dalam tx → minta koneksi kedua dari pool (prod max=1) → deadlock → 502.
+  const moveStatusId = await getStatusId('Done', 'movement')
 
   const newMovementId = await db.transaction(async (tx) => {
     const mt = await tx.select({ id: moveTypes.id }).from(moveTypes).where(eq(moveTypes.code, code)).limit(1)
     if (!mt[0]) throw new HttpError(404, { message: `Movetype ${code} tidak ditemukan.` })
-    const statusId = await getStatusId('Done', 'movement')
 
     if (code === 'OUT') {
       if (item.stock < quantity) throw validationError({ quantity: ['Stok tidak cukup.'] })
@@ -97,7 +99,7 @@ movementsRouter.post('/movements', requireAuth, async (c) => {
         warehouseId: item.warehouseId,
         itemId: item.id,
         movetypeId: mt[0].id,
-        statusId,
+        statusId: moveStatusId,
         quantity: String(quantity),
         note: input.note ?? null,
         createdAt: now,
