@@ -21,6 +21,11 @@ export const forbidden = (message = 'Anda tidak memiliki akses ke resource ini.'
 
 export const conflict = (message: string) => new HttpError(409, { message })
 
+// Kegagalan dependensi storage hulu (mis. upload Supabase gagal) → 502 berpesan jelas,
+// bukan 500 generik. Pesan asli tetap di-log oleh handler untuk diagnosis.
+export const storageError = (message = 'Gagal mengunggah berkas. Coba lagi nanti.') =>
+  new HttpError(502, { message })
+
 export const unauthorized = (message = 'Unauthenticated.') =>
   new HttpError(401, { message })
 

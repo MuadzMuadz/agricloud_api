@@ -4,7 +4,7 @@ import type { Env } from '../../app.ts'
 import { db } from '../../db/client.ts'
 import { lands, cycles } from '../../db/schema.ts'
 import { readBody, validate, nullifyEmpty } from '../../lib/request.ts'
-import { validationError, notFound, forbidden, conflict } from '../../lib/http.ts'
+import { validationError, notFound, forbidden, conflict, storageError } from '../../lib/http.ts'
 import { storePublic, deletePublic } from '../../lib/storage.ts'
 import { getStatusId } from '../../lib/domain.ts'
 import { requireAuth } from '../../middleware/auth.ts'
@@ -61,7 +61,15 @@ fieldsRouter.post('/myfields', requireAuth, async (c) => {
   const input = validate(createLandSchema, nullifyEmpty(body))
   const thumb = takeThumbnail(body)
 
-  const imageUrl = thumb ? await storePublic('lands', thumb) : null
+  let imageUrl: string | null = null
+  if (thumb) {
+    try {
+      imageUrl = await storePublic('lands', thumb)
+    } catch (e) {
+      console.error('storePublic gagal:', e) // pesan asli tetap ke log untuk diagnosis
+      throw storageError()
+    }
+  }
   const boundary = input.boundary ? JSON.parse(input.boundary) : null
   const now = dbNow()
 
@@ -113,7 +121,12 @@ fieldsRouter.put('/myfields/:id', requireAuth, async (c) => {
   if (input.boundary !== undefined) patch.boundary = input.boundary ? JSON.parse(input.boundary) : null
   if (thumb) {
     await deletePublic(land.imageUrl)
-    patch.imageUrl = await storePublic('lands', thumb)
+    try {
+      patch.imageUrl = await storePublic('lands', thumb)
+    } catch (e) {
+      console.error('storePublic gagal:', e) // pesan asli tetap ke log untuk diagnosis
+      throw storageError()
+    }
   }
 
   await db.update(lands).set(patch).where(eq(lands.id, id))
